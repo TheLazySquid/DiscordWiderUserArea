@@ -1,0 +1,25 @@
+{
+  "name": "wideruserarea",
+  "version": "0.1.0",
+  "description": "A BetterDiscord plugin that expands your user area into the server list",
+  "main": "src/main.ts",
+  "type": "module",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "github.com/TheLazySquid/DiscordWiderUserArea"
+  },
+  "keywords": [
+    "BetterDiscord"
+  ],
+  "author": "TheLazySquid",
+  "license": "MIT",
+  "dependencies": {
+    "@rollup/plugin-typescript": "^11.1.5",
+    "@types/betterdiscord": "github:zerthox/betterdiscord-types",
+    "lazypluginlib": "github:TheLazySquid/LazyPluginLib",
+    "rollup-plugin-string": "^3.0.0"
+  }
+}

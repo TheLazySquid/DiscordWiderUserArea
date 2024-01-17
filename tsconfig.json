@@ -1,0 +1,12 @@
+{
+    "compilerOptions": {
+        "target": "es6",
+        "module": "ESNext",
+        "outDir": "dist",
+        "strict": true,
+        "esModuleInterop": true
+    },
+    "exclude": [
+        "lazypluginlib/types.d.ts"
+    ]
+}
