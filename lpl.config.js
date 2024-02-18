@@ -14,7 +14,11 @@ export default {
     source: pkg.repository.url + "/blob/main/build/WiderUserArea.plugin.js",
   },
   plugins: [
-    typescript(),
+    typescript({
+      compilerOptions: {
+        target: "es2022"
+      }
+    }),
     string({
       include: "**/*.css"
     })

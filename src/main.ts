@@ -2,8 +2,7 @@
 import styles from './styles.css';
 import { userAreaSelector, containerSelector, layerSelector, serverListSelector, channelsSelector, scaleRegex } from './constants';
 import { scaleDOMRect } from './utils';
-
-import 'lazypluginlib/types.d.ts';
+import { onStart, onStop, watchElement } from 'lazypluginlib';
 
 let themesObserver: MutationObserver;
 let channelResizeObserver: ResizeObserver;
