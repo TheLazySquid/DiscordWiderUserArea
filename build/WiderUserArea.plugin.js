@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.1.1
+ * @version 0.1.2
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -45,6 +45,7 @@ module.exports = class {
 
         const onStart = createCallbackHandler("start");
         const onStop = createCallbackHandler("stop");
+        const onSwitch = createCallbackHandler("onSwitch");
         const watchElement = (selector, callback) => {
             let observer = new MutationObserver((mutations) => {
                 for (let mutation of mutations) {
@@ -88,10 +89,10 @@ module.exports = class {
 var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\n.sidebar_ded4b5,\r\nnav[aria-label=\"Servers sidebar\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\nsection[aria-label=\"User area\"] {\r\n    position: fixed;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n.avatarWrapper_ba5175 {\r\n    flex-grow: 1;\r\n}";
 
 const userAreaSelector = 'section[aria-label="User area"]';
-const containerSelector = '.container__037ed';
-const layerSelector = '.layer__2efaa';
 const serverListSelector = 'nav[aria-label="Servers sidebar"]';
-const channelsSelector = '.sidebar_ded4b5 > *';
+const containerSelector = `div:has(> ${serverListSelector})`;
+const layerSelector = `[class*="layer__"]`;
+const channelsSelector = '[class*="sidebar_"] > nav';
 const scaleRegex = /scale\((.*)\)/;
 
 function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
@@ -114,17 +115,21 @@ function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
 
 // @ts-ignore
 
-let themesObserver;
-let channelResizeObserver;
-let baseChannelSize = 0;
+let baseChannelHeight = 0;
+let baseChannelWidth = 0;
 let varsSet = new Set();
 watchElement(userAreaSelector, userAreaFound);
-channelResizeObserver = new ResizeObserver(entries => {
+let userAreaObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
-        updateVar('--sidebar-height', `${baseChannelSize - entry.contentRect.height}px`);
+        updateVar('--sidebar-height', `${baseChannelHeight - entry.contentRect.height}px`);
     }
 });
-themesObserver = new MutationObserver(async () => {
+let channelsObserver = new ResizeObserver(entries => {
+    for (let entry of entries) {
+        updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
+    }
+});
+let themesObserver = new MutationObserver(async () => {
     // wait a bit for it to apply
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log('theme changed');
@@ -144,6 +149,20 @@ function updateVar(name, value) {
     BdApi.DOM.addStyle(`wua-${name}`, `:root { ${name}: ${value} !important; }`);
     varsSet.add(name);
 }
+onSwitch(() => {
+    // hacky fix for betteranimations sometimes giving a parent the "perspective" style breaking the fixed positioning
+    setTimeout(() => {
+        const userArea = document.querySelector(userAreaSelector);
+        let parent = userArea?.parentElement;
+        while (parent) {
+            if (parent.style.perspective) {
+                parent.style.perspective = '';
+                break;
+            }
+            parent = parent.parentElement;
+        }
+    }, 5100);
+});
 function userAreaFound(element) {
     // remove the old style if it exists
     BdApi.DOM.removeStyle('wua-styles');
@@ -163,22 +182,25 @@ function userAreaFound(element) {
     const channelsRect = scaleDOMRect(channels.getBoundingClientRect(), layerScale, centerX, centerY);
     // figure out how far from the bottom of the screen the user area is
     const bottom = containerRect.bottom - rect.bottom;
-    baseChannelSize = channelsRect.height + rect.height;
+    baseChannelHeight = channelsRect.height + rect.height;
+    baseChannelWidth = serverListRect.left - channelsRect.left;
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
     updateVar('--sidebar-height', `${channelsRect.height}px`);
-    updateVar('--user-area-width', `${rect.right - serverListRect.left}px`);
+    updateVar('--user-area-width', `${channelsRect.right - serverListRect.left}px`);
     updateVar('--user-area-left', `${serverListRect.left}px`);
     updateVar('--user-area-bottom', `${bottom}px`);
-    channelResizeObserver.observe(element);
+    userAreaObserver.observe(element);
+    channelsObserver.observe(channels);
 }
 onStart(() => {
     themesObserver.observe(document.querySelector("bd-themes"), { childList: true, subtree: true });
 });
 onStop(() => {
-    BdApi.DOM.removeStyle('wua-styles');
-    channelResizeObserver.disconnect();
+    userAreaObserver.disconnect();
+    channelsObserver.disconnect();
     themesObserver.disconnect();
+    BdApi.DOM.removeStyle('wua-styles');
     for (let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);
     }
@@ -192,6 +214,11 @@ onStop(() => {
     }
     stop() {
         for(let callback of this.stopCallbacks) {
+            callback.callback();
+        }
+    }
+    onSwitch() {
+        for(let callback of this.onSwitchCallbacks) {
             callback.callback();
         }
     }

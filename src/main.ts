@@ -2,22 +2,27 @@
 import styles from './styles.css';
 import { userAreaSelector, containerSelector, layerSelector, serverListSelector, channelsSelector, scaleRegex } from './constants';
 import { scaleDOMRect } from './utils';
-import { onStart, onStop, watchElement } from 'lazypluginlib';
+import { onStart, onStop, onSwitch, watchElement } from 'lazypluginlib';
 
-let themesObserver: MutationObserver;
-let channelResizeObserver: ResizeObserver;
-let baseChannelSize: number = 0;
+let baseChannelHeight: number = 0;
+let baseChannelWidth: number = 0;
 let varsSet: Set<string> = new Set();
     
 watchElement(userAreaSelector, userAreaFound);
 
-channelResizeObserver = new ResizeObserver(entries => {
+let userAreaObserver = new ResizeObserver(entries => {
     for(let entry of entries) {
-        updateVar('--sidebar-height', `${baseChannelSize - entry.contentRect.height}px`);
+        updateVar('--sidebar-height', `${baseChannelHeight - entry.contentRect.height}px`);
     }
 })
 
-themesObserver = new MutationObserver(async () => {
+let channelsObserver = new ResizeObserver(entries => {
+    for(let entry of entries) {
+        updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
+    }
+})
+
+let themesObserver = new MutationObserver(async () => {
     // wait a bit for it to apply
     await new Promise(resolve => setTimeout(resolve, 1000));
     console.log('theme changed')
@@ -39,6 +44,21 @@ function updateVar(name: string, value: string) {
     BdApi.DOM.addStyle(`wua-${name}`, `:root { ${name}: ${value} !important; }`)
     varsSet.add(name);
 }
+
+onSwitch(() => {
+    // hacky fix for betteranimations sometimes giving a parent the "perspective" style breaking the fixed positioning
+    setTimeout(() => {
+        const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
+        let parent = userArea?.parentElement;
+        while(parent) {
+            if(parent.style.perspective) {
+                parent.style.perspective = '';
+                break;
+            }
+            parent = parent.parentElement;
+        }
+    }, 5100)
+})
 
 function userAreaFound(element: HTMLElement) {
     // remove the old style if it exists
@@ -65,16 +85,18 @@ function userAreaFound(element: HTMLElement) {
     // figure out how far from the bottom of the screen the user area is
     const bottom = containerRect.bottom - rect.bottom;
 
-    baseChannelSize = channelsRect.height + rect.height;
+    baseChannelHeight = channelsRect.height + rect.height;
+    baseChannelWidth = serverListRect.left - channelsRect.left;
     
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
     updateVar('--sidebar-height', `${channelsRect.height}px`);
-    updateVar('--user-area-width', `${rect.right - serverListRect.left}px`);
+    updateVar('--user-area-width', `${channelsRect.right - serverListRect.left}px`);
     updateVar('--user-area-left', `${serverListRect.left}px`);
     updateVar('--user-area-bottom', `${bottom}px`)
 
-    channelResizeObserver.observe(element)
+    userAreaObserver.observe(element)
+    channelsObserver.observe(channels)
 }
     
 onStart(() => {
@@ -82,9 +104,10 @@ onStart(() => {
 })
 
 onStop(() => {
-    BdApi.DOM.removeStyle('wua-styles');
-    channelResizeObserver.disconnect();
+    userAreaObserver.disconnect();
+    channelsObserver.disconnect();
     themesObserver.disconnect();
+    BdApi.DOM.removeStyle('wua-styles');
     for(let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);
     }
