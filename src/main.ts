@@ -1,12 +1,17 @@
 // @ts-ignore
 import styles from './styles.css';
-import { userAreaSelector, containerSelector, layerSelector, serverListSelector, channelsSelector, scaleRegex } from './constants';
+import { userAreaSelector, containerSelector, layerSelector, serverListSelector, channelsSelector, scaleRegex, UAButtonsSelector } from './constants';
 import { scaleDOMRect } from './utils';
 import { onStart, onStop, onSwitch, watchElement } from 'lazypluginlib';
 
 let baseChannelHeight: number = 0;
 let baseChannelWidth: number = 0;
 let varsSet: Set<string> = new Set();
+
+const recalcDebounce = BdApi.Utils.debounce(() => {
+    const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
+    if(userArea) userAreaFound(userArea);
+}, 150)
     
 watchElement(userAreaSelector, userAreaFound);
 
@@ -18,8 +23,19 @@ let userAreaObserver = new ResizeObserver(entries => {
 
 let channelsObserver = new ResizeObserver(entries => {
     for(let entry of entries) {
+        // hide everything but the profile picture if the channel list is hidden
+        let btns = document.querySelector(UAButtonsSelector) as HTMLDivElement;
+        if(entry.contentRect.width === 0) {
+            if(btns) btns.style.display = 'none';
+        } else {
+            if(btns) btns.style.display = '';
+        }
         updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
     }
+})
+
+watchElement(channelsSelector, (element) => {
+    channelsObserver.observe(element);
 })
 
 let themesObserver = new MutationObserver(async () => {
@@ -31,11 +47,6 @@ let themesObserver = new MutationObserver(async () => {
     const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
     if(userArea) userAreaFound(userArea);
 })
-
-let recalcDebounce = BdApi.Utils.debounce(() => {
-    const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
-    if(userArea) userAreaFound(userArea);
-}, 150)
 
 window.addEventListener('resize', recalcDebounce);
 
@@ -57,6 +68,7 @@ onSwitch(() => {
             }
             parent = parent.parentElement;
         }
+        userAreaFound(userArea!);
     }, 5100)
 })
 
@@ -96,7 +108,6 @@ function userAreaFound(element: HTMLElement) {
     updateVar('--user-area-bottom', `${bottom}px`)
 
     userAreaObserver.observe(element)
-    channelsObserver.observe(channels)
 }
     
 onStart(() => {

@@ -4,3 +4,4 @@ export const containerSelector = `div:has(> ${serverListSelector})`
 export const layerSelector = `[class*="layer__"]`
 export const channelsSelector = '[class*="sidebar_"] > nav'
 export const scaleRegex = /scale\((.*)\)/
+export const UAButtonsSelector = 'div:has(> button[aria-label="Mute"])'

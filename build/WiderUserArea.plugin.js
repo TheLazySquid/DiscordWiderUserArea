@@ -94,6 +94,7 @@ const containerSelector = `div:has(> ${serverListSelector})`;
 const layerSelector = `[class*="layer__"]`;
 const channelsSelector = '[class*="sidebar_"] > nav';
 const scaleRegex = /scale\((.*)\)/;
+const UAButtonsSelector = 'div:has(> button[aria-label="Mute"])';
 
 function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
     // Calculate the distance of the rect from the scale center
@@ -118,6 +119,11 @@ function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
 let baseChannelHeight = 0;
 let baseChannelWidth = 0;
 let varsSet = new Set();
+const recalcDebounce = BdApi.Utils.debounce(() => {
+    const userArea = document.querySelector(userAreaSelector);
+    if (userArea)
+        userAreaFound(userArea);
+}, 150);
 watchElement(userAreaSelector, userAreaFound);
 let userAreaObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
@@ -126,8 +132,21 @@ let userAreaObserver = new ResizeObserver(entries => {
 });
 let channelsObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
+        // hide everything but the profile picture if the channel list is hidden
+        let btns = document.querySelector(UAButtonsSelector);
+        if (entry.contentRect.width === 0) {
+            if (btns)
+                btns.style.display = 'none';
+        }
+        else {
+            if (btns)
+                btns.style.display = '';
+        }
         updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
     }
+});
+watchElement(channelsSelector, (element) => {
+    channelsObserver.observe(element);
 });
 let themesObserver = new MutationObserver(async () => {
     // wait a bit for it to apply
@@ -138,11 +157,6 @@ let themesObserver = new MutationObserver(async () => {
     if (userArea)
         userAreaFound(userArea);
 });
-let recalcDebounce = BdApi.Utils.debounce(() => {
-    const userArea = document.querySelector(userAreaSelector);
-    if (userArea)
-        userAreaFound(userArea);
-}, 150);
 window.addEventListener('resize', recalcDebounce);
 function updateVar(name, value) {
     BdApi.DOM.removeStyle(`wua-${name}`);
@@ -161,6 +175,7 @@ onSwitch(() => {
             }
             parent = parent.parentElement;
         }
+        userAreaFound(userArea);
     }, 5100);
 });
 function userAreaFound(element) {
@@ -191,7 +206,6 @@ function userAreaFound(element) {
     updateVar('--user-area-left', `${serverListRect.left}px`);
     updateVar('--user-area-bottom', `${bottom}px`);
     userAreaObserver.observe(element);
-    channelsObserver.observe(channels);
 }
 onStart(() => {
     themesObserver.observe(document.querySelector("bd-themes"), { childList: true, subtree: true });
