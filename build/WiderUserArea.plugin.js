@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.1.2
+ * @version 0.1.3
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
