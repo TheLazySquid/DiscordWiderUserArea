@@ -3,18 +3,19 @@
     --user-area-left: 0;
 }
 
-.sidebar_ded4b5,
+[class*="sidebar_"],
 nav[aria-label="Servers sidebar"] {
     height: var(--sidebar-height);
 }
 
 section[aria-label="User area"] {
     position: fixed;
+    overflow: hidden;
     bottom: var(--user-area-bottom);
     left: var(--user-area-left);
     width: var(--user-area-width);
 }
 
-.avatarWrapper_ba5175 {
+[class*="avatarWrapper_"] {
     flex-grow: 1;
 }
