@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.1.4
+ * @version 0.1.5
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -86,15 +86,15 @@ module.exports = class {
 
 'use strict';
 
-var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\n[class*=\"sidebar_\"],\r\nnav[aria-label=\"Servers sidebar\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\nsection[aria-label=\"User area\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}";
+var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\n[class*=\"sidebar_\"],\r\nnav[class*=\"guilds__\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels__\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}";
 
-const userAreaSelector = 'section[aria-label="User area"]';
-const serverListSelector = 'nav[aria-label="Servers sidebar"]';
+const userAreaSelector = 'section[class*="panels__"]';
+const serverListSelector = 'nav[class*="guilds__"]';
 const containerSelector = `div:has(> ${serverListSelector})`;
 const layerSelector = `[class*="layer__"]`;
 const channelsSelector = '[class*="sidebar_"] > nav';
 const scaleRegex = /scale\((.*)\)/;
-const UAButtonsSelector = 'div:has(> button[aria-label="Mute"])';
+const UAButtonsSelector = 'div[class*="avatarWrapper_"] + div';
 
 function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
     // Calculate the distance of the rect from the scale center

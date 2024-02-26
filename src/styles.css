@@ -4,11 +4,12 @@
 }
 
 [class*="sidebar_"],
-nav[aria-label="Servers sidebar"] {
+nav[class*="guilds__"] {
     height: var(--sidebar-height);
 }
 
-section[aria-label="User area"] {
+/* user area */
+section[class*="panels__"] {
     position: fixed;
     overflow: hidden;
     bottom: var(--user-area-bottom);
