@@ -4,8 +4,9 @@
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
- * @website github.com/TheLazySquid/DiscordWiderUserArea
- * @source github.com/TheLazySquid/DiscordWiderUserArea/blob/main/build/WiderUserArea.plugin.js
+ * @website https://github.com/TheLazySquid/DiscordWiderUserArea
+ * @source https://github.com/TheLazySquid/DiscordWiderUserArea/blob/main/build/WiderUserArea.plugin.js
+ * @updateUrl https://raw.githubusercontent.com/TheLazySquid/DiscordWiderUserArea/main/build/WiderUserArea.plugin.js
  */
 module.exports = class {
     constructor() {
