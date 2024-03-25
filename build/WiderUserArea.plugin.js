@@ -4,86 +4,11 @@
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
- * @website github.com/TheLazySquid/DiscordWiderUserArea
- * @source github.com/TheLazySquid/DiscordWiderUserArea/blob/main/build/WiderUserArea.plugin.js
+ * @website https://github.com/TheLazySquid/DiscordWiderUserArea
+ * @source https://github.com/TheLazySquid/DiscordWiderUserArea/blob/main/build/WiderUserArea.plugin.js
  */
 module.exports = class {
     constructor() {
-        const createCallbackHandler = (callbackName) => {
-            const fullName = callbackName + "Callbacks";
-            this[fullName] = [];
-            return (callback, once, id) => {
-                let object = { callback }
-
-                const delCallback = () => {
-                    this[fullName].splice(this[fullName].indexOf(object), 1);
-                }
-                
-                // if once is true delete it after use
-                if (once === true) {
-                    object.callback = () => {
-                        callback();
-                        delCallback();
-                    }
-                }
-
-                if(id) {
-                    object.id = id
-
-                    for(let i = 0; i < this[fullName].length; i++) {
-                        if(this[fullName][i].id === id) {
-                            this[fullName][i] = object;
-                            return delCallback;
-                        }
-                    }
-                }
-
-                this[fullName].push(object);
-                return delCallback;
-            }
-        }
-
-        const onStart = createCallbackHandler("start");
-        const onStop = createCallbackHandler("stop");
-        const onSwitch = createCallbackHandler("onSwitch");
-        const watchElement = (selector, callback) => {
-            let observer = new MutationObserver((mutations) => {
-                for (let mutation of mutations) {
-                    if (mutation.addedNodes.length) {
-                        for (let node of mutation.addedNodes) {
-                            if (node.matches && node.matches(selector)) {
-                                callback(node);
-                            }
-
-                            if (node.querySelectorAll) {
-                                for (let element of node.querySelectorAll(selector)) {
-                                    callback(element);
-                                }
-                            }
-                        }
-                    }
-                }
-            });
-
-            let startDispose = onStart(() => {
-                observer.observe(document.body, { childList: true, subtree: true });
-
-                for(let element of document.querySelectorAll(selector)) {
-                    callback(element);
-                }
-            });
-
-            let stopDispose = onStop(() => {
-                observer.disconnect();
-            });
-
-            return () => {
-                observer.disconnect();
-                startDispose();
-                stopDispose();
-            }
-        }
-
 'use strict';
 
 var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\n[class*=\"sidebar_\"],\r\nnav[class*=\"guilds__\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels__\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}";
@@ -114,8 +39,106 @@ function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
     return newRect;
 }
 
-// @ts-ignore
+const createCallbackHandler = (callbackName) => {
+    const fullName = callbackName + "Callbacks";
+    this[fullName] = [];
+    this[callbackName] = () => {
+        for (let i = 0; i < this[fullName].length; i++) {
+            this[fullName][i].callback();
+        }
+    };
+    return (callback, once, id) => {
+        let object = { callback };
+        const delCallback = () => {
+            this[fullName].splice(this[fullName].indexOf(object), 1);
+        };
+        // if once is true delete it after use
+        if (once === true) {
+            object.callback = () => {
+                callback();
+                delCallback();
+            };
+        }
+        if (id) {
+            object.id = id;
+            for (let i = 0; i < this[fullName].length; i++) {
+                if (this[fullName][i].id === id) {
+                    this[fullName][i] = object;
+                    return delCallback;
+                }
+            }
+        }
+        this[fullName].push(object);
+        return delCallback;
+    };
+};
+/**
+ * Takes a callback and fires it when the plugin is started
+ * @param callback - The callback to be fired
+ * @param once - If true, the callback will be deleted after use
+ * @param id - The id of the callback - if it already exists, it will be replaced
+ * @returns A function to delete the callback
+ */
+const onStart = createCallbackHandler("start");
+/**
+ * Takes a callback and fires it when the plugin is stopped
+ * @param callback - The callback to be fired
+ * @param once - If true, the callback will be deleted after use
+ * @param id - The id of the callback - if it already exists, it will be replaced
+ * @returns A function to delete the callback
+ */
+const onStop = createCallbackHandler("stop");
+/**
+ * Takes a callback and fires it when the user navigates
+ * @param callback - The callback to be fired
+ * @param once - If true, the callback will be deleted after use
+ * @param id - The id of the callback - if it already exists, it will be replaced
+ * @returns A function to delete the callback
+ */
+const onSwitch = createCallbackHandler("onSwitch");
 
+/**
+ * Watches for an element with a given selector to be added to the DOM
+ * @param selector The CSS selector to watch
+ * @param callback The callback to run whenever the matching element is added to the DOM
+ * @returns A function to stop watching
+ */
+function watchElement(selector, callback) {
+    let observer = new MutationObserver((mutations) => {
+        for (let mutation of mutations) {
+            if (mutation.addedNodes.length) {
+                for (let node of mutation.addedNodes) {
+                    if (!(node instanceof HTMLElement))
+                        continue;
+                    if (node.matches && node.matches(selector)) {
+                        callback(node);
+                    }
+                    if (node.querySelectorAll) {
+                        for (let element of node.querySelectorAll(selector)) {
+                            callback(element);
+                        }
+                    }
+                }
+            }
+        }
+    });
+    let startDispose = onStart(() => {
+        observer.observe(document.body, { childList: true, subtree: true });
+        for (let element of document.querySelectorAll(selector)) {
+            callback(element);
+        }
+    });
+    let stopDispose = onStop(() => {
+        observer.disconnect();
+    });
+    return () => {
+        observer.disconnect();
+        startDispose();
+        stopDispose();
+    };
+}
+
+// @ts-ignore
 let baseChannelHeight = 0;
 let baseChannelWidth = 0;
 let varsSet = new Set();
@@ -219,21 +242,5 @@ onStop(() => {
         BdApi.DOM.removeStyle(`wua-${varName}`);
     }
 });
-    }
-
-    start() {
-        for(let callback of this.startCallbacks) {
-            callback.callback();
-        }
-    }
-    stop() {
-        for(let callback of this.stopCallbacks) {
-            callback.callback();
-        }
-    }
-    onSwitch() {
-        for(let callback of this.onSwitchCallbacks) {
-            callback.callback();
-        }
     }
 }
