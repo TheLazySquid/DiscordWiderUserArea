@@ -72,7 +72,7 @@ onSwitch(() => {
     }, 5100)
 })
 
-function userAreaFound(element: HTMLElement) {
+function userAreaFound(element: Element) {
     // remove the old style if it exists
     BdApi.DOM.removeStyle('wua-styles');
 

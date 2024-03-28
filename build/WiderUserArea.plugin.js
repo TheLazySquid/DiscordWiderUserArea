@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.1.5
+ * @version 0.1.6
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -16,7 +16,7 @@ var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\
 const userAreaSelector = 'section[class*="panels__"]';
 const serverListSelector = 'nav[class*="guilds__"]';
 const containerSelector = `div:has(> ${serverListSelector})`;
-const layerSelector = `[class*="layer__"]`;
+const layerSelector = `[class*="layers__"]`;
 const channelsSelector = '[class*="sidebar_"] > nav';
 const scaleRegex = /scale\((.*)\)/;
 const UAButtonsSelector = 'div[class*="avatarWrapper_"] + div';

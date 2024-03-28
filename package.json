@@ -1,6 +1,6 @@
 {
   "name": "wideruserarea",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "description": "A BetterDiscord plugin that expands your user area into the server list, compatible with most themes",
   "main": "src/main.ts",
   "type": "module",
