@@ -20,3 +20,8 @@ section[class*="panels__"] {
 [class*="avatarWrapper_"] {
     flex-grow: 1;
 }
+
+/* prevent the user info popout from clipping */
+[id^="popout"]:has([class*="userPopoutOverlayBackground"]) {
+    transform: translateX(20px);
+}
