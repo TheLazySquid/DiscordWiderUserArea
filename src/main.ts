@@ -48,8 +48,6 @@ let themesObserver = new MutationObserver(async () => {
     if(userArea) userAreaFound(userArea);
 })
 
-window.addEventListener('resize', recalcDebounce);
-
 function updateVar(name: string, value: string) {
     BdApi.DOM.removeStyle(`wua-${name}`);
     BdApi.DOM.addStyle(`wua-${name}`, `:root { ${name}: ${value} !important; }`)
@@ -111,6 +109,8 @@ function userAreaFound(element: Element) {
 }
     
 onStart(() => {
+    window.addEventListener('resize', recalcDebounce);
+
     themesObserver.observe(document.querySelector("bd-themes")!, { childList: true, subtree: true })
 })
 
@@ -122,4 +122,6 @@ onStop(() => {
     for(let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);
     }
+
+    window.removeEventListener('resize', recalcDebounce);
 })
