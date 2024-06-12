@@ -23,5 +23,5 @@ section[class*="panels__"] {
 
 /* prevent the user info popout from clipping */
 [id^="popout"]:has([class*="userPopoutOverlayBackground"]) {
-    transform: translateX(20px);
+    margin-left: 20px;
 }
