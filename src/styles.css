@@ -4,12 +4,12 @@
 }
 
 [class*="sidebar_"],
-nav[class*="guilds__"] {
+nav[class*="guilds_"] {
     height: var(--sidebar-height);
 }
 
 /* user area */
-section[class*="panels__"] {
+section[class*="panels_"] {
     position: fixed;
     overflow: hidden;
     bottom: var(--user-area-bottom);
