@@ -22,6 +22,6 @@ section[class*="panels_"] {
 }
 
 /* prevent the user info popout from clipping */
-[id^="popout"]:has([class*="userPopoutOverlayBackground"]) {
-    margin-left: 20px;
+[class*="accountProfilePopoutWrapper"] {
+    left: 0;
 }
