@@ -1,6 +1,7 @@
 import typescript from "@rollup/plugin-typescript";
 import { string } from "rollup-plugin-string";
-import pkg from "./package.json" assert { type: "json" };
+import fs from 'fs';
+const pkg = JSON.parse(fs.readFileSync("./package.json"));
 
 export default {
   input: "src/main.ts",

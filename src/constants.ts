@@ -5,3 +5,5 @@ export const layerSelector = `[class*="baseLayer"]`
 export const channelsSelector = '[class*="sidebar_"] > nav'
 export const scaleRegex = /scale\((.*)\)/
 export const UAButtonsSelector = 'div[class*="avatarWrapper_"] + div'
+export const firstServerListSelector = `${serverListSelector}:first-child`
+export const secondServerListSelector = `${serverListSelector}:nth-child(2)`;

@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.2.1
+ * @version 0.2.2
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -20,6 +20,8 @@ const layerSelector = `[class*="baseLayer"]`;
 const channelsSelector = '[class*="sidebar_"] > nav';
 const scaleRegex = /scale\((.*)\)/;
 const UAButtonsSelector = 'div[class*="avatarWrapper_"] + div';
+const firstServerListSelector = `${serverListSelector}:first-child`;
+const secondServerListSelector = `${serverListSelector}:nth-child(2)`;
 
 function scaleDOMRect(rect, scale, scaleCenterX, scaleCenterY) {
     // Calculate the distance of the rect from the scale center
@@ -153,8 +155,11 @@ let userAreaObserver = new ResizeObserver(entries => {
         updateVar('--sidebar-height', `${baseChannelHeight - entry.contentRect.height}px`);
     }
 });
+let channelsRect;
+let secondChannelsRect;
 let channelsObserver = new ResizeObserver(entries => {
     for (let entry of entries) {
+        channelsRect = entry.contentRect;
         // hide everything but the profile picture if the channel list is hidden
         let btns = document.querySelector(UAButtonsSelector);
         if (entry.contentRect.width === 0) {
@@ -165,11 +170,28 @@ let channelsObserver = new ResizeObserver(entries => {
             if (btns)
                 btns.style.display = '';
         }
-        updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
+        let newWidth = entry.contentRect.right - baseChannelWidth;
+        if (secondChannelsRect)
+            newWidth += secondChannelsRect.width;
+        updateVar('--user-area-width', `${newWidth}px`);
+        console.log("change by channels");
     }
 });
 watchElement(channelsSelector, (element) => {
     channelsObserver.observe(element);
+});
+let secondServerListObserver = new ResizeObserver((entries) => {
+    if (!channelsRect)
+        return;
+    for (let entry of entries) {
+        secondChannelsRect = entry.contentRect;
+        let width = entry.contentRect.width;
+        updateVar('--user-area-width', `${channelsRect.right - baseChannelWidth + width}px`);
+        console.log("change by second");
+    }
+});
+watchElement(secondServerListSelector, (element) => {
+    secondServerListObserver.observe(element);
 });
 let themesObserver = new MutationObserver(async () => {
     // wait a bit for it to apply
@@ -205,8 +227,9 @@ function userAreaFound(element) {
     BdApi.DOM.removeStyle('wua-styles');
     const layer = document.querySelector(layerSelector);
     const container = document.querySelector(containerSelector);
-    const serverList = document.querySelector(serverListSelector);
+    const serverList = document.querySelector(firstServerListSelector);
     const channels = document.querySelector(channelsSelector);
+    const secondServerList = document.querySelector(secondServerListSelector);
     const layerScale = 1 / parseFloat(scaleRegex.exec(layer.style.transform)?.[1] ?? '1');
     const layerRect = layer.getBoundingClientRect();
     const centerX = layerRect.left + layerRect.width / 2;
@@ -221,6 +244,10 @@ function userAreaFound(element) {
     const bottom = containerRect.bottom - rect.bottom;
     baseChannelHeight = channelsRect.height + rect.height;
     baseChannelWidth = serverListRect.left - channelsRect.left;
+    if (secondServerList) {
+        const secondServerListRect = scaleDOMRect(secondServerList.getBoundingClientRect(), layerScale, centerX, centerY);
+        baseChannelWidth += secondServerListRect.width;
+    }
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
     updateVar('--sidebar-height', `${channelsRect.height}px`);
@@ -237,6 +264,7 @@ onStop(() => {
     userAreaObserver.disconnect();
     channelsObserver.disconnect();
     themesObserver.disconnect();
+    secondServerListObserver.disconnect();
     BdApi.DOM.removeStyle('wua-styles');
     for (let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);

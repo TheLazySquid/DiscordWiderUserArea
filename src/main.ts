@@ -1,6 +1,8 @@
 // @ts-ignore
 import styles from './styles.css';
-import { userAreaSelector, containerSelector, layerSelector, serverListSelector, channelsSelector, scaleRegex, UAButtonsSelector } from './constants';
+import { userAreaSelector, containerSelector, layerSelector,
+    channelsSelector, scaleRegex, UAButtonsSelector, secondServerListSelector, 
+    firstServerListSelector} from './constants';
 import { scaleDOMRect } from './utils';
 import { onStart, onStop, onSwitch, watchElement } from 'lazypluginlib';
 
@@ -19,10 +21,15 @@ let userAreaObserver = new ResizeObserver(entries => {
     for(let entry of entries) {
         updateVar('--sidebar-height', `${baseChannelHeight - entry.contentRect.height}px`);
     }
-})
+});
+
+let channelsRect: DOMRect;
+let secondChannelsRect: DOMRect | undefined;
 
 let channelsObserver = new ResizeObserver(entries => {
     for(let entry of entries) {
+        channelsRect = entry.contentRect;
+
         // hide everything but the profile picture if the channel list is hidden
         let btns = document.querySelector(UAButtonsSelector) as HTMLDivElement;
         if(entry.contentRect.width === 0) {
@@ -30,13 +37,34 @@ let channelsObserver = new ResizeObserver(entries => {
         } else {
             if(btns) btns.style.display = '';
         }
-        updateVar('--user-area-width', `${entry.contentRect.right - baseChannelWidth}px`);
+
+        let newWidth = entry.contentRect.right - baseChannelWidth;
+        if(secondChannelsRect) newWidth += secondChannelsRect.width;
+
+        updateVar('--user-area-width', `${newWidth}px`);
+        console.log("change by channels");
     }
 })
 
+
 watchElement(channelsSelector, (element) => {
     channelsObserver.observe(element);
+});
+
+let secondServerListObserver = new ResizeObserver((entries) => {
+    if(!channelsRect) return;
+    for(let entry of entries) {
+        secondChannelsRect = entry.contentRect;
+
+        let width = entry.contentRect.width;
+        updateVar('--user-area-width', `${channelsRect.right - baseChannelWidth + width}px`);
+        console.log("change by second")
+    }
 })
+
+watchElement(secondServerListSelector, (element) => {
+    secondServerListObserver.observe(element);
+});
 
 let themesObserver = new MutationObserver(async () => {
     // wait a bit for it to apply
@@ -76,8 +104,9 @@ function userAreaFound(element: Element) {
 
     const layer = document.querySelector<HTMLDivElement>(layerSelector)!;
     const container = document.querySelector<HTMLDivElement>(containerSelector)!;
-    const serverList = document.querySelector<HTMLDivElement>(serverListSelector)!;
+    const serverList = document.querySelector<HTMLDivElement>(firstServerListSelector)!;
     const channels = document.querySelector<HTMLDivElement>(channelsSelector)!;
+    const secondServerList = document.querySelector<HTMLDivElement>(secondServerListSelector);
 
     const layerScale = 1 / parseFloat(scaleRegex.exec(layer.style.transform)?.[1] ?? '1');
     const layerRect = layer.getBoundingClientRect();
@@ -87,16 +116,20 @@ function userAreaFound(element: Element) {
 
     // this scaling is neccesary for compatibility with betterAnimations,
     // which sometimes scales the layer when in a settings menu, which is where theme switches would be.
-    const rect = scaleDOMRect(element.getBoundingClientRect(), layerScale, centerX, centerY)
-    const containerRect = scaleDOMRect(container.getBoundingClientRect(), layerScale, centerX, centerY)
-    const serverListRect = scaleDOMRect(serverList.getBoundingClientRect(), layerScale, centerX, centerY)
-    const channelsRect = scaleDOMRect(channels.getBoundingClientRect(), layerScale, centerX, centerY) 
+    const rect = scaleDOMRect(element.getBoundingClientRect(), layerScale, centerX, centerY);
+    const containerRect = scaleDOMRect(container.getBoundingClientRect(), layerScale, centerX, centerY);
+    const serverListRect = scaleDOMRect(serverList.getBoundingClientRect(), layerScale, centerX, centerY);
+    const channelsRect = scaleDOMRect(channels.getBoundingClientRect(), layerScale, centerX, centerY);
 
     // figure out how far from the bottom of the screen the user area is
     const bottom = containerRect.bottom - rect.bottom;
 
     baseChannelHeight = channelsRect.height + rect.height;
     baseChannelWidth = serverListRect.left - channelsRect.left;
+    if(secondServerList) {
+        const secondServerListRect = scaleDOMRect(secondServerList.getBoundingClientRect(), layerScale, centerX, centerY);
+        baseChannelWidth += secondServerListRect.width;
+    }
     
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
@@ -118,6 +151,8 @@ onStop(() => {
     userAreaObserver.disconnect();
     channelsObserver.disconnect();
     themesObserver.disconnect();
+    secondServerListObserver.disconnect();
+
     BdApi.DOM.removeStyle('wua-styles');
     for(let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);
