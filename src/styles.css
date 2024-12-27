@@ -3,9 +3,12 @@
     --user-area-left: 0;
 }
 
-[class*="sidebar_"],
 nav[class*="guilds_"] {
     height: var(--sidebar-height);
+}
+
+[class*="sidebar_"] {
+    height: calc(var(--sidebar-height) - var(--notices-height));
 }
 
 /* user area */

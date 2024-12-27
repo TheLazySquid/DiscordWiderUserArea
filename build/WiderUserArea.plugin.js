@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.2.2
+ * @version 0.2.3
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -11,7 +11,7 @@ module.exports = class {
     constructor() {
 'use strict';
 
-var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\n[class*=\"sidebar_\"],\r\nnav[class*=\"guilds_\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels_\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}\r\n\r\n/* prevent the user info popout from clipping */\r\n[class*=\"accountProfilePopoutWrapper\"] {\r\n    left: 0;\r\n}";
+var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\nnav[class*=\"guilds_\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n[class*=\"sidebar_\"] {\r\n    height: calc(var(--sidebar-height) - var(--notices-height));\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels_\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}\r\n\r\n/* prevent the user info popout from clipping */\r\n[class*=\"accountProfilePopoutWrapper\"] {\r\n    left: 0;\r\n}";
 
 const userAreaSelector = 'section[class*="panels_"]';
 const serverListSelector = 'nav[class*="guilds_"]';
@@ -174,10 +174,10 @@ let channelsObserver = new ResizeObserver(entries => {
         if (secondChannelsRect)
             newWidth += secondChannelsRect.width;
         updateVar('--user-area-width', `${newWidth}px`);
-        console.log("change by channels");
     }
 });
 watchElement(channelsSelector, (element) => {
+    channelsObserver.disconnect();
     channelsObserver.observe(element);
 });
 let secondServerListObserver = new ResizeObserver((entries) => {
@@ -187,10 +187,10 @@ let secondServerListObserver = new ResizeObserver((entries) => {
         secondChannelsRect = entry.contentRect;
         let width = entry.contentRect.width;
         updateVar('--user-area-width', `${channelsRect.right - baseChannelWidth + width}px`);
-        console.log("change by second");
     }
 });
 watchElement(secondServerListSelector, (element) => {
+    secondServerListObserver.disconnect();
     secondServerListObserver.observe(element);
 });
 let themesObserver = new MutationObserver(async () => {
@@ -201,6 +201,13 @@ let themesObserver = new MutationObserver(async () => {
     const userArea = document.querySelector(userAreaSelector);
     if (userArea)
         userAreaFound(userArea);
+});
+let noticesHeight = 0;
+let noticesObserver = new ResizeObserver((entries) => {
+    for (let entry of entries) {
+        noticesHeight = entry.contentRect.height;
+        updateVar('--notices-height', `${entry.contentRect.height}px`);
+    }
 });
 function updateVar(name, value) {
     BdApi.DOM.removeStyle(`wua-${name}`);
@@ -250,7 +257,7 @@ function userAreaFound(element) {
     }
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
-    updateVar('--sidebar-height', `${channelsRect.height}px`);
+    updateVar('--sidebar-height', `${channelsRect.height + noticesHeight}px`);
     updateVar('--user-area-width', `${channelsRect.right - serverListRect.left}px`);
     updateVar('--user-area-left', `${serverListRect.left}px`);
     updateVar('--user-area-bottom', `${bottom}px`);
@@ -259,12 +266,15 @@ function userAreaFound(element) {
 onStart(() => {
     window.addEventListener('resize', recalcDebounce);
     themesObserver.observe(document.querySelector("bd-themes"), { childList: true, subtree: true });
+    updateVar('--notices-height', '0px');
+    noticesObserver.observe(document.querySelector("#bd-notices"));
 });
 onStop(() => {
     userAreaObserver.disconnect();
     channelsObserver.disconnect();
     themesObserver.disconnect();
     secondServerListObserver.disconnect();
+    noticesObserver.disconnect();
     BdApi.DOM.removeStyle('wua-styles');
     for (let varName of varsSet) {
         BdApi.DOM.removeStyle(`wua-${varName}`);

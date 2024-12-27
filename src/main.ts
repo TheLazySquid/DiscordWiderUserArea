@@ -11,9 +11,9 @@ let baseChannelWidth: number = 0;
 let varsSet: Set<string> = new Set();
 
 const recalcDebounce = BdApi.Utils.debounce(() => {
-    const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
+    const userArea = document.querySelector<HTMLDivElement>(userAreaSelector);
     if(userArea) userAreaFound(userArea);
-}, 150)
+}, 150);
     
 watchElement(userAreaSelector, userAreaFound);
 
@@ -42,12 +42,12 @@ let channelsObserver = new ResizeObserver(entries => {
         if(secondChannelsRect) newWidth += secondChannelsRect.width;
 
         updateVar('--user-area-width', `${newWidth}px`);
-        console.log("change by channels");
     }
-})
+});
 
 
 watchElement(channelsSelector, (element) => {
+    channelsObserver.disconnect();
     channelsObserver.observe(element);
 });
 
@@ -58,11 +58,11 @@ let secondServerListObserver = new ResizeObserver((entries) => {
 
         let width = entry.contentRect.width;
         updateVar('--user-area-width', `${channelsRect.right - baseChannelWidth + width}px`);
-        console.log("change by second")
     }
-})
+});
 
 watchElement(secondServerListSelector, (element) => {
+    secondServerListObserver.disconnect();
     secondServerListObserver.observe(element);
 });
 
@@ -74,7 +74,16 @@ let themesObserver = new MutationObserver(async () => {
     // recalculate the user area
     const userArea = document.querySelector<HTMLDivElement>(userAreaSelector)
     if(userArea) userAreaFound(userArea);
-})
+});
+
+let noticesHeight = 0;
+
+let noticesObserver = new ResizeObserver((entries) => {
+    for(let entry of entries) {
+        noticesHeight = entry.contentRect.height;
+        updateVar('--notices-height', `${entry.contentRect.height}px`);
+    }
+});
 
 function updateVar(name: string, value: string) {
     BdApi.DOM.removeStyle(`wua-${name}`);
@@ -96,7 +105,7 @@ onSwitch(() => {
         }
         userAreaFound(userArea!);
     }, 5100)
-})
+});
 
 function userAreaFound(element: Element) {
     // remove the old style if it exists
@@ -133,10 +142,10 @@ function userAreaFound(element: Element) {
     
     // add the new style
     BdApi.DOM.addStyle('wua-styles', styles);
-    updateVar('--sidebar-height', `${channelsRect.height}px`);
+    updateVar('--sidebar-height', `${channelsRect.height + noticesHeight}px`);
     updateVar('--user-area-width', `${channelsRect.right - serverListRect.left}px`);
     updateVar('--user-area-left', `${serverListRect.left}px`);
-    updateVar('--user-area-bottom', `${bottom}px`)
+    updateVar('--user-area-bottom', `${bottom}px`);
 
     userAreaObserver.observe(element)
 }
@@ -145,13 +154,17 @@ onStart(() => {
     window.addEventListener('resize', recalcDebounce);
 
     themesObserver.observe(document.querySelector("bd-themes")!, { childList: true, subtree: true })
-})
+
+    updateVar('--notices-height', '0px');
+    noticesObserver.observe(document.querySelector("#bd-notices")!);
+});
 
 onStop(() => {
     userAreaObserver.disconnect();
     channelsObserver.disconnect();
     themesObserver.disconnect();
     secondServerListObserver.disconnect();
+    noticesObserver.disconnect();
 
     BdApi.DOM.removeStyle('wua-styles');
     for(let varName of varsSet) {
@@ -159,4 +172,4 @@ onStop(() => {
     }
 
     window.removeEventListener('resize', recalcDebounce);
-})
+});
