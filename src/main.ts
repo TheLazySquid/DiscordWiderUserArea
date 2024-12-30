@@ -85,6 +85,11 @@ let noticesObserver = new ResizeObserver((entries) => {
     }
 });
 
+watchElement("#bd-notices", (el) => {
+    noticesObserver.disconnect();
+    noticesObserver.observe(el);
+});
+
 function updateVar(name: string, value: string) {
     BdApi.DOM.removeStyle(`wua-${name}`);
     BdApi.DOM.addStyle(`wua-${name}`, `:root { ${name}: ${value} !important; }`)
@@ -152,11 +157,9 @@ function userAreaFound(element: Element) {
     
 onStart(() => {
     window.addEventListener('resize', recalcDebounce);
+    updateVar('--notices-height', '0px');
 
     themesObserver.observe(document.querySelector("bd-themes")!, { childList: true, subtree: true })
-
-    updateVar('--notices-height', '0px');
-    noticesObserver.observe(document.querySelector("#bd-notices")!);
 });
 
 onStop(() => {

@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.2.3
+ * @version 0.2.4
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -209,6 +209,10 @@ let noticesObserver = new ResizeObserver((entries) => {
         updateVar('--notices-height', `${entry.contentRect.height}px`);
     }
 });
+watchElement("#bd-notices", (el) => {
+    noticesObserver.disconnect();
+    noticesObserver.observe(el);
+});
 function updateVar(name, value) {
     BdApi.DOM.removeStyle(`wua-${name}`);
     BdApi.DOM.addStyle(`wua-${name}`, `:root { ${name}: ${value} !important; }`);
@@ -265,9 +269,8 @@ function userAreaFound(element) {
 }
 onStart(() => {
     window.addEventListener('resize', recalcDebounce);
-    themesObserver.observe(document.querySelector("bd-themes"), { childList: true, subtree: true });
     updateVar('--notices-height', '0px');
-    noticesObserver.observe(document.querySelector("#bd-notices"));
+    themesObserver.observe(document.querySelector("bd-themes"), { childList: true, subtree: true });
 });
 onStop(() => {
     userAreaObserver.disconnect();
