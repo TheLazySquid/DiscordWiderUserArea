@@ -1,6 +1,6 @@
 /**
  * @name WiderUserArea
- * @version 0.2.4
+ * @version 0.2.5
  * @description A BetterDiscord plugin that expands your user area into the server list, compatible with most themes
  * @author TheLazySquid
  * @authorId 619261917352951815
@@ -11,7 +11,7 @@ module.exports = class {
     constructor() {
 'use strict';
 
-var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\nnav[class*=\"guilds_\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n[class*=\"sidebar_\"] {\r\n    height: calc(var(--sidebar-height) - var(--notices-height));\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels_\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\n[class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}\r\n\r\n/* prevent the user info popout from clipping */\r\n[class*=\"accountProfilePopoutWrapper\"] {\r\n    left: 0;\r\n}";
+var styles = ":root {\r\n    --user-area-bottom: 0;\r\n    --user-area-left: 0;\r\n}\r\n\r\nnav[class*=\"guilds_\"] {\r\n    height: var(--sidebar-height);\r\n}\r\n\r\n[class*=\"sidebar_\"] {\r\n    height: calc(var(--sidebar-height) - var(--notices-height));\r\n}\r\n\r\n/* user area */\r\nsection[class*=\"panels_\"] {\r\n    position: fixed;\r\n    overflow: hidden;\r\n    bottom: var(--user-area-bottom);\r\n    left: var(--user-area-left);\r\n    width: var(--user-area-width);\r\n}\r\n\r\nsection[class*=\"panels_\"] [class*=\"avatarWrapper_\"] {\r\n    flex-grow: 1;\r\n}\r\n\r\n/* prevent the user info popout from clipping */\r\n[class*=\"accountProfilePopoutWrapper\"] {\r\n    left: 0;\r\n}";
 
 const userAreaSelector = 'section[class*="panels_"]';
 const serverListSelector = 'nav[class*="guilds_"]';

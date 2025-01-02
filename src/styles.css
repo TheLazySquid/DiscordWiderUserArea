@@ -20,7 +20,7 @@ section[class*="panels_"] {
     width: var(--user-area-width);
 }
 
-[class*="avatarWrapper_"] {
+section[class*="panels_"] [class*="avatarWrapper_"] {
     flex-grow: 1;
 }
 
